@@ -32,7 +32,6 @@ namespace TemperatureService.Services
         // Historial de la última calibración/medición en caché
         private double? _lastTemperature = null;
         private double? _lastLightLevel = null;
-        private DateTime _lastDbSaveTime = DateTime.MinValue;
 
         public SerialService(
             IHubContext<TelemetryHub> hubContext,
@@ -80,7 +79,6 @@ namespace TemperatureService.Services
                 // Resetear mediciones
                 _lastTemperature = null;
                 _lastLightLevel = null;
-                _lastDbSaveTime = DateTime.MinValue;
 
                 if (portName == "SIMULATOR")
                 {
@@ -320,12 +318,8 @@ namespace TemperatureService.Services
                     lightLevel = _lastLightLevel
                 });
 
-                // Lógica de persistencia en base de datos con aceleración/throttle de 5 segundos
-                if (DateTime.UtcNow - _lastDbSaveTime >= TimeSpan.FromSeconds(5))
-                {
-                    _lastDbSaveTime = DateTime.UtcNow;
-                    SaveToDatabase(_lastTemperature, _lastLightLevel);
-                }
+                // Guardar en base de datos inmediatamente para cada lectura detectada
+                SaveToDatabase(_lastTemperature, _lastLightLevel);
             }
         }
 
