@@ -97,3 +97,4 @@ D:\VisualStudioProjects\NucleoBoard_TemperatureDashboard\Service\TemperatureServ
 D:\VisualStudioProjects\NucleoBoard_TemperatureDashboard\Service\TemperatureService\obj\Debug\net9.0\TemperatureService.pdb
 D:\VisualStudioProjects\NucleoBoard_TemperatureDashboard\Service\TemperatureService\obj\Debug\net9.0\TemperatureService.genruntimeconfig.cache
 D:\VisualStudioProjects\NucleoBoard_TemperatureDashboard\Service\TemperatureService\obj\Debug\net9.0\ref\TemperatureService.dll
+D:\VisualStudioProjects\NucleoBoard_TemperatureDashboard\Service\TemperatureService\obj\Debug\net9.0\TemperatureService.sourcelink.json
