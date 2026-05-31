@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "name": "CONFIGURACION GENERAL",
+      "path": "D:/VisualStudioProjects/NucleoBoard_TemperatureDashboard",
+    },
+    {
+      "name": "SERVICIO BACKEND (C#)",
+      "path": "D:/VisualStudioProjects/NucleoBoard_TemperatureDashboard/Service/TemperatureService",
+    },
+    {
+      "name": "VISTA FRONTEND (Angular)",
+      "path": "D:/VisualStudioProjects/NucleoBoard_TemperatureDashboard/View/TemperatureView",
+    },
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+}

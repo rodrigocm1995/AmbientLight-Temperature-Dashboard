@@ -1,0 +1,195 @@
+<div class="app-container">
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR (TOOLBAR) -->
+  <mat-toolbar color="primary" class="app-toolbar mat-elevation-z4">
+    <div class="toolbar-title-container">
+      <mat-icon class="toolbar-icon">sensors</mat-icon>
+      <span class="toolbar-title">Monitor de Sensores OPT3001 & TMP117</span>
+    </div>
+    
+    <span class="spacer"></span>
+
+    <!-- Indicador de Estado de Conexión -->
+    <div class="status-indicator" [class.connected]="telemetryService.isConnected()">
+      <span class="status-dot"></span>
+      <span class="status-text">
+        {{ telemetryService.isConnected() ? 'Conectado (' + telemetryService.activePort() + ')' : 'Desconectado' }}
+      </span>
+    </div>
+
+    <!-- Botón de Alternar Modo Día/Noche -->
+    <button mat-icon-button (click)="onToggleTheme()" aria-label="Cambiar Tema" class="theme-toggle-btn">
+      <mat-icon>{{ isDarkMode() ? 'wb_sunny' : 'nights_stay' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- REJILLA PRINCIPAL DEL DASHBOARD -->
+  <main class="dashboard-content">
+    <div class="dashboard-grid">
+      
+      <!-- COLUMNA IZQUIERDA (CONTROLES Y HISTORIAL DE BASE DE DATOS) -->
+      <aside class="sidebar-column">
+        <!-- Tarjeta de Conexión Serial -->
+        <mat-card class="sidebar-card">
+          <mat-card-header>
+            <mat-card-title>Conexión UART (Serial)</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="card-body-form">
+            <!-- Selector de Puerto -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Puerto COM</mat-label>
+              <mat-select class="select-text" [disabled]="telemetryService.isConnected()" [(value)]="selectedPort">
+                @for (port of availablePorts(); track port) {
+                  <mat-option [value]="port">
+                    {{ port }} {{ port === 'SIMULATOR' ? '(Simulador)' : '' }}
+                  </mat-option>
+                } @empty {
+                  <mat-option value="">Ningún puerto detectado</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Selector de Baudios -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Baudios (bps)</mat-label>
+              <mat-select class="select-text" [disabled]="telemetryService.isConnected()" [(value)]="selectedBaudRate">
+                @for (baud of baudRates; track baud) {
+                  <mat-option [value]="baud">{{ baud }} bps</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </mat-card-content>
+          <mat-card-actions class="card-actions">
+            @if (!telemetryService.isConnected()) {
+              <button mat-raised-button color="primary" class="action-btn connect-btn" (click)="onConnect()" [disabled]="!selectedPort()">
+                <mat-icon>play_arrow</mat-icon> Conectar
+              </button>
+            } @else {
+              <button mat-raised-button color="warn" class="action-btn disconnect-btn" (click)="onDisconnect()">
+                <mat-icon>stop</mat-icon> Desconectar
+              </button>
+            }
+            <button mat-button class="action-btn-secondary" (click)="loadPorts()" [disabled]="telemetryService.isConnected()">
+              <mat-icon>refresh</mat-icon> Refrescar
+            </button>
+          </mat-card-actions>
+        </mat-card>
+
+        <!-- Tarjeta de Historial de Base de Datos (SQL Server) -->
+        <mat-card class="sidebar-card history-card">
+          <mat-card-header class="card-header-flex">
+            <mat-card-title>Historial SQL Server</mat-card-title>
+            <button mat-icon-button (click)="loadHistory()" class="refresh-history-btn" aria-label="Actualizar Historial">
+              <mat-icon>sync</mat-icon>
+            </button>
+          </mat-card-header>
+          <mat-card-content class="history-table-container">
+            <table mat-table [dataSource]="historyRecords()" class="mat-elevation-z1 history-table">
+              
+              <!-- Timestamp Column -->
+              <ng-container matColumnDef="timestamp">
+                <th mat-header-cell *matHeaderCellDef>Hora</th>
+                <td mat-cell *matCellDef="let record">
+                  {{ record.timestamp | date:'HH:mm:ss' }}
+                </td>
+              </ng-container>
+
+              <!-- Temperature Column -->
+              <ng-container matColumnDef="temperature">
+                <th mat-header-cell *matHeaderCellDef>Temp (°C)</th>
+                <td mat-cell *matCellDef="let record">
+                  {{ record.temperature !== null ? (record.temperature | number:'1.2-2') + ' °C' : '--' }}
+                </td>
+              </ng-container>
+
+              <!-- LightLevel Column -->
+              <ng-container matColumnDef="lightLevel">
+                <th mat-header-cell *matHeaderCellDef>Ilum (Lux)</th>
+                <td mat-cell *matCellDef="let record">
+                  {{ record.lightLevel !== null ? (record.lightLevel | number:'1.2-2') + ' lx' : '--' }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              
+              <!-- Empty Row state -->
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell empty-table-cell" colspan="3">
+                  {{ telemetryService.isConnected() ? 'Cargando datos...' : 'Sin conexión activa en base de datos.' }}
+                </td>
+              </tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </aside>
+
+      <!-- SECCIÓN DERECHA (GRÁFICAS DE SENSORES Y CONSOLA DE LOGS) -->
+      <section class="main-column">
+        <div class="metrics-charts-grid">
+          
+          <!-- TARJETA: GRÁFICA Y MÉTRICA DE TEMPERATURA -->
+          <mat-card class="chart-metric-card temp-card">
+            <mat-card-content class="metric-chart-body">
+              <div class="metric-header">
+                <div class="metric-info">
+                  <span class="metric-label">Temperatura TMP117</span>
+                  <span class="metric-value temp-text">{{ currentTemperature() }}</span>
+                </div>
+                <div class="sensor-icon-bg temp-icon">
+                  <mat-icon>thermostat</mat-icon>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas #tempChartCanvas></canvas>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- TARJETA: GRÁFICA Y MÉTRICA DE ILUMINACIÓN -->
+          <mat-card class="chart-metric-card light-card">
+            <mat-card-content class="metric-chart-body">
+              <div class="metric-header">
+                <div class="metric-info">
+                  <span class="metric-label">Iluminación OPT3001</span>
+                  <span class="metric-value light-text">{{ currentLightLevel() }}</span>
+                </div>
+                <div class="sensor-icon-bg light-icon">
+                  <mat-icon>light_mode</mat-icon>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas #lightChartCanvas></canvas>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- TARJETA: CONSOLA DE LOGS SERIALES -->
+        <mat-card class="terminal-card">
+          <mat-card-header class="card-header-flex">
+            <mat-card-title class="terminal-title">
+              <mat-icon class="terminal-icon-title">terminal</mat-icon> Consola de Datos UART
+            </mat-card-title>
+            <button mat-flat-button color="accent" class="clear-terminal-btn" (click)="onClearConsole()">
+              <mat-icon>delete_sweep</mat-icon> Limpiar logs
+            </button>
+          </mat-card-header>
+          <mat-card-content class="terminal-content">
+            <div class="terminal" #terminalConsole>
+              @for (line of telemetryService.terminalLines(); track line) {
+                <div class="terminal-line {{ line.type }}-msg">
+                  [{{ line.timestamp }}] {{ line.text }}
+                </div>
+              } @empty {
+                <div class="terminal-empty-msg">
+                  Consola inactiva. Conéctate a un puerto serie o simulador para iniciar el registro.
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </section>
+
+    </div>
+  </main>
+</div>
