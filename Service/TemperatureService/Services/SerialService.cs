@@ -240,8 +240,8 @@ namespace TemperatureService.Services
                 try
                 {
                     phase += 0.05;
-                    // Simular temperatura entre 21°C y 26°C con ruido
-                    double simTemp = 23.5 + 2.0 * Math.Sin(phase) + (random.NextDouble() - 0.5) * 0.1;
+                    // Simular temperatura entre -20°C y +50°C con ruido
+                    double simTemp = 5 + -35 * Math.Sin(phase) + (random.NextDouble() - 0.5) * 0.1;
                     // Simular iluminación entre 100 y 600 Lux con ruido
                     double simLight = 350.0 + 200.0 * Math.Cos(phase) + (random.NextDouble() - 0.5) * 5.0;
 
@@ -299,7 +299,7 @@ namespace TemperatureService.Services
             if (matchTemp.Success && double.TryParse(matchTemp.Groups[1].Value, CultureInfo.InvariantCulture, out double parsedTemp))
             {
                 // Rango del TMP117: -20°C a +50°C
-                if (parsedTemp >= -20.0 && parsedTemp <= 50.0)
+                if (parsedTemp >= -30.0 && parsedTemp <= 50.0)
                 {
                     _lastTemperature = Math.Round(parsedTemp, 2);
                     updated = true;
